@@ -12,11 +12,28 @@ from datetime import datetime
 
 
 class NotesBuilder:
-    def __init__(self, root_dir="."):
+    def __init__(self, root_dir=".", base_url=None):
         self.root_dir = Path(root_dir).resolve()
         self.notes_dir = self.root_dir / "notes"
         self.build_dir = self.root_dir / "build"
         self.static_dir = self.root_dir / "static"
+
+        # 根据环境自动设置 BASE_URL
+        if base_url is None:
+            # 检查是否在 GitHub Actions 环境中
+            if os.getenv('GITHUB_ACTIONS') == 'true':
+                github_repository = os.getenv('GITHUB_REPOSITORY', '')
+                if github_repository:
+                    repo_name = github_repository.split('/')[-1]
+                    self.base_url = f'/{repo_name}/'
+                else:
+                    self.base_url = '/'
+            else:
+                self.base_url = '/'
+        else:
+            self.base_url = base_url
+            
+        print(f"🔧 BASE_URL 设置为: {self.base_url}")
 
     def clean_build(self):
         """清理构建目录"""
@@ -85,9 +102,10 @@ class NotesBuilder:
 
         try:
             # shiroa build --path-to-root notes/math-analysis/ -w . notes/math-analysis --dest-dir ../../build/math-analysis
+            notebook_base_url = self.base_url + notebook['name'] + "/"
             cmd = [
                 "shiroa", "build",
-                "--path-to-root", "/" + notebook['name'] + "/",
+                "--path-to-root", notebook_base_url,
                 "-w", str(self.root_dir),
                 notebook['path'],
                 "--dest-dir", str(output_dir)
@@ -210,9 +228,10 @@ def main():
     parser = argparse.ArgumentParser(description="构建 Typst Notes 项目")
     parser.add_argument("command", choices=["build", "serve", "clean"], help="执行的命令")
     parser.add_argument("--port", type=int, default=8000, help="服务器端口 (默认: 8000)")
+    parser.add_argument("--base-url", type=str, help="设置 BASE_URL (例如: /my-repo/)")
 
     args = parser.parse_args()
-    builder = NotesBuilder()
+    builder = NotesBuilder(base_url=args.base_url)
 
     if args.command == "build":
         builder.build_all()
