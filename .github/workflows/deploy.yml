@@ -51,18 +51,11 @@ jobs:
 
     - name: Install shiroa
       run: |
-        cargo install --git https://github.com/Myriad-Dreamin/shiroa --tag 0.3.0 --locked shiroa
+        cargo install --git https://github.com/Myriad-Dreamin/shiroa --tag v0.3.0 --locked shiroa
 
         # 验证安装
         shiroa --version
 
-    - name: Install Typst
-      run: |
-        # 安装 Typst
-        curl -fsSL https://github.com/typst/typst/releases/latest/download/typst-x86_64-unknown-linux-musl.tar.xz | tar -xJ
-        sudo mv typst-x86_64-unknown-linux-musl/typst /usr/local/bin/
-        # 验证安装
-        typst --version
 
     - name: Install Python dependencies
       run: |
