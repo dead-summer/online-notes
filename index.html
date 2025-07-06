@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Notes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+            font-weight: 300;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: #7f8c8d;
+            font-weight: 400;
+        }
+
+        .bookshelf {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .book-card {
+            background: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 2rem;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+        }
+
+        .book-card:hover {
+            border-color: #d1d9e6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .book-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: block;
+            opacity: 0.8;
+        }
+
+        .book-title {
+            font-size: 1.3rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+
+        .book-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .book-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #adb5bd;
+            border-top: 1px solid #f8f9fa;
+            padding-top: 1rem;
+        }
+
+        .last-modified {
+            font-style: normal;
+        }
+
+        .status-badge {
+            background: #f8f9fa;
+            color: #495057;
+            padding: 0.2rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            border: 1px solid #e9ecef;
+        }
+
+        .loading {
+            text-align: center;
+            color: #6c757d;
+            font-size: 1rem;
+            margin: 3rem 0;
+        }
+
+        .error {
+            background: #fff5f5;
+            color: #e53e3e;
+            padding: 1rem;
+            border: 1px solid #fed7d7;
+            border-radius: 8px;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .bookshelf {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .book-card {
+                padding: 1.5rem;
+            }
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .fade-in:nth-child(1) { animation-delay: 0.05s; }
+        .fade-in:nth-child(2) { animation-delay: 0.1s; }
+        .fade-in:nth-child(3) { animation-delay: 0.15s; }
+        .fade-in:nth-child(4) { animation-delay: 0.2s; }
+        .fade-in:nth-child(5) { animation-delay: 0.25s; }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Math Notes</h1>
+            <p class="subtitle">精心整理的学习笔记，助力知识积累</p>
+        </header>
+
+        <div class="bookshelf" id="bookshelf">
+            <div class="loading">正在加载笔记本...</div>
+        </div>
+    </div>
+
+    <script>
+        // 默认笔记本配置（作为备用数据）
+        const defaultNotebooks = {
+            "math-analysis": {
+                title: "数学分析",
+                description: "微积分基础理论，极限、导数、积分等核心概念的深入学习",
+                icon: "📊",
+                status: "进行中"
+            },
+            "linear-algebra": {
+                title: "线性代数", 
+                description: "向量空间、矩阵运算、特征值等线性代数核心内容",
+                icon: "📐",
+                status: "已完成"
+            },
+            "physics": {
+                title: "物理学",
+                description: "经典力学、电磁学等物理学基础理论与应用",
+                icon: "⚛️",
+                status: "计划中"
+            }
+        };
+
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // 获取相对时间描述
+        function getRelativeTime(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffInMs = now - date;
+            const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+            
+            if (diffInDays === 0) return "今天";
+            if (diffInDays === 1) return "昨天";
+            if (diffInDays < 7) return `${diffInDays}天前`;
+            if (diffInDays < 30) return `${Math.floor(diffInDays / 7)}周前`;
+            return formatDate(dateString);
+        }
+
+        // 从manifest.json加载笔记本数据
+        async function loadNotebooks() {
+            try {
+                const response = await fetch('./manifest.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const manifest = await response.json();
+                return manifest.notebooks || [];
+            } catch (error) {
+                console.error('加载manifest.json失败:', error);
+                return null;
+            }
+        }
+
+        // 渲染书架
+        function renderBookshelf(notebooks) {
+            const bookshelf = document.getElementById('bookshelf');
+            bookshelf.innerHTML = ''; // 清空加载提示
+            
+            if (!notebooks || notebooks.length === 0) {
+                bookshelf.innerHTML = '<div class="error">未找到笔记本数据</div>';
+                return;
+            }
+
+            notebooks.forEach((book, index) => {
+                // 获取默认配置
+                const defaultConfig = defaultNotebooks[book.name] || {};
+                
+                const bookCard = document.createElement('a');
+                bookCard.className = 'book-card fade-in';
+                bookCard.href = `./${book.path || book.name}/`;
+                bookCard.target = '_blank';
+                bookCard.rel = 'noopener noreferrer';
+                bookCard.style.animationDelay = `${(index + 1) * 0.05}s`;
+                
+                // 合并数据：优先使用manifest中的数据，其次使用默认配置
+                const title = book.title || defaultConfig.title || book.name;
+                const description = defaultConfig.description || `${title}相关学习笔记`;
+                const icon = defaultConfig.icon || "📖";
+                const status = defaultConfig.status || "进行中";
+                const lastModified = book.last_modified || new Date().toISOString();
+                
+                bookCard.innerHTML = `
+                    <div class="book-icon">${icon}</div>
+                    <div class="book-title">${title}</div>
+                    <div class="book-description">${description}</div>
+                    <div class="book-stats">
+                        <span class="status-badge">${status}</span>
+                        <span class="last-modified">${getRelativeTime(lastModified)}</span>
+                    </div>
+                `;
+                
+                bookshelf.appendChild(bookCard);
+            });
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            const bookshelf = document.getElementById('bookshelf');
+            bookshelf.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        // 初始化应用
+        async function initializeApp() {
+            try {
+                const notebooks = await loadNotebooks();
+                
+                if (notebooks) {
+                    renderBookshelf(notebooks);
+                } else {
+                    // 如果加载失败，使用默认数据
+                    const fallbackBooks = Object.keys(defaultNotebooks).map(name => ({
+                        name,
+                        title: defaultNotebooks[name].title,
+                        path: name,
+                        last_modified: new Date().toISOString()
+                    }));
+                    renderBookshelf(fallbackBooks);
+                }
+            } catch (error) {
+                console.error('初始化失败:', error);
+                showError('加载笔记本时出现错误，请刷新页面重试');
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+        // 添加交互效果
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.book-card')) {
+                const card = e.target.closest('.book-card');
+                card.style.transform = 'scale(0.98) translateY(-2px)';
+                setTimeout(() => {
+                    card.style.transform = '';
+                }, 150);
+            }
+        });
+
+        // 可选：添加刷新功能
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+                e.preventDefault();
+                location.reload();
+            }
+        });
+    </script>
+</body>
+</html>
