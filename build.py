@@ -1,7 +1,6 @@
 """
 Typst Notes 构建脚本
 使用 shiroa 构建多个笔记本并生成统一的书架页面
-支持 GitHub Pages 部署
 """
 
 import os
@@ -11,29 +10,13 @@ import json
 from pathlib import Path
 from datetime import datetime
 
+
 class NotesBuilder:
-    def __init__(self, root_dir=".", base_url=None):
+    def __init__(self, root_dir="."):
         self.root_dir = Path(root_dir).resolve()
         self.notes_dir = self.root_dir / "notes"
         self.build_dir = self.root_dir / "build"
         self.static_dir = self.root_dir / "static"
-        
-        # 根据环境自动设置 BASE_URL
-        if base_url is None:
-            # 检查是否在 GitHub Actions 环境中
-            if os.getenv('GITHUB_ACTIONS') == 'true':
-                github_repository = os.getenv('GITHUB_REPOSITORY', '')
-                if github_repository:
-                    repo_name = github_repository.split('/')[-1]
-                    self.base_url = f'/{repo_name}/'
-                else:
-                    self.base_url = '/'
-            else:
-                self.base_url = '/'
-        else:
-            self.base_url = base_url
-            
-        print(f"🔧 BASE_URL 设置为: {self.base_url}")
 
     def clean_build(self):
         """清理构建目录"""
@@ -101,20 +84,14 @@ class NotesBuilder:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         try:
-            # 使用正确的 base_url 路径
-            # notebook_base_url = self.base_url + notebook['name'] + "/"
-            notebook_base_url = "/" + notebook['name'] + "/"
-            
+            # shiroa build --path-to-root notes/math-analysis/ -w . notes/math-analysis --dest-dir ../../build/math-analysis
             cmd = [
                 "shiroa", "build",
-                "--path-to-root", notebook_base_url,
+                "--path-to-root", "/" + notebook['name'] + "/",
                 "-w", str(self.root_dir),
                 notebook['path'],
                 "--dest-dir", str(output_dir)
             ]
-            
-            print(f"🔧 执行命令: {' '.join(cmd)}")
-            
             result = subprocess.run(
                 cmd,
                 capture_output=True,
@@ -132,8 +109,7 @@ class NotesBuilder:
                     shutil.rmtree(output_dir)
                     return self.build_notebook(notebook)
                 print(f"❌ {notebook['name']} 构建失败:")
-                print(f"stdout: {result.stdout}")
-                print(f"stderr: {stderr}")
+                print(stderr)
                 return False
 
         except subprocess.CalledProcessError as e:
@@ -151,20 +127,10 @@ class NotesBuilder:
             print("✅ 静态文件已复制")
 
     def copy_index_page(self):
-        """复制首页文件并处理路径"""
+        """复制首页文件"""
         index_file = self.root_dir / "index.html"
         if index_file.exists():
-            # 读取 index.html 内容
-            with open(index_file, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            # 如果需要，可以在这里替换路径
-            # 例如：content = content.replace('href="/', f'href="{self.base_url}')
-            
-            # 写入构建目录
-            with open(self.build_dir / "index.html", 'w', encoding='utf-8') as f:
-                f.write(content)
-            
+            shutil.copy2(index_file, self.build_dir / "index.html")
             print("✅ 首页文件已复制")
         else:
             print("⚠️  未找到 index.html，将跳过")
@@ -173,7 +139,6 @@ class NotesBuilder:
         """生成笔记本清单"""
         manifest = {
             'generated_at': datetime.now().isoformat(),
-            'base_url': self.base_url,
             'notebooks': []
         }
 
@@ -183,7 +148,6 @@ class NotesBuilder:
                 'name': nb['name'],
                 'title': nb['name'].replace('-', ' ').title(),
                 'path': nb['name'],
-                'url': self.base_url + nb['name'] + '/',
                 'last_modified': nb['last_modified'].isoformat()
             })
 
@@ -192,12 +156,6 @@ class NotesBuilder:
             json.dump(manifest, f, ensure_ascii=False, indent=2)
 
         print("✅ 笔记本清单已生成")
-
-    def create_nojekyll(self):
-        """创建 .nojekyll 文件以确保 GitHub Pages 正确处理文件"""
-        nojekyll_file = self.build_dir / ".nojekyll"
-        nojekyll_file.touch()
-        print("✅ .nojekyll 文件已创建")
 
     def build_all(self):
         """构建所有笔记本"""
@@ -218,18 +176,17 @@ class NotesBuilder:
         self.copy_static_files()
         self.copy_index_page()
         self.generate_notebook_manifest(notebooks)
-        self.create_nojekyll()
 
         print("=" * 50)
         print(f"🎉 构建完成! 成功构建 {success_count}/{len(notebooks)} 个笔记本")
         print(f"📁 输出目录: {self.build_dir}")
-        
-        if os.getenv('GITHUB_ACTIONS') != 'true':
-            print(f"🌐 在浏览器中打开 {self.build_dir}/index.html 查看结果")
+        print(f"🌐 在浏览器中打开 {self.build_dir}/index.html 查看结果")
 
         return success_count == len(notebooks)
 
     def serve(self, port=8000):
+        self.build_all()
+
         """启动本地服务器"""
         if not self.build_dir.exists():
             print("❌ 构建目录不存在，请先运行构建命令")
@@ -253,17 +210,13 @@ def main():
     parser = argparse.ArgumentParser(description="构建 Typst Notes 项目")
     parser.add_argument("command", choices=["build", "serve", "clean"], help="执行的命令")
     parser.add_argument("--port", type=int, default=8000, help="服务器端口 (默认: 8000)")
-    parser.add_argument("--base-url", type=str, help="设置 BASE_URL (例如: /my-repo/)")
 
     args = parser.parse_args()
-    builder = NotesBuilder(base_url=args.base_url)
+    builder = NotesBuilder()
 
     if args.command == "build":
-        success = builder.build_all()
-        if not success:
-            exit(1)
-    elif args.command == "serve":
         builder.build_all()
+    elif args.command == "serve":
         builder.serve(args.port)
     elif args.command == "clean":
         builder.clean_build()
