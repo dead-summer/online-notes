@@ -102,8 +102,8 @@ class NotesBuilder:
 
         try:
             # 使用正确的 base_url 路径
-            # notebook_base_url = self.base_url + notebook['name'] + "/"
-            notebook_base_url = "/" + notebook['name'] + "/"
+            notebook_base_url = self.base_url + notebook['name'] + "/"
+            # notebook_base_url = "/" + notebook['name'] + "/"
             
             cmd = [
                 "shiroa", "build",
