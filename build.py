@@ -101,10 +101,11 @@ class NotesBuilder:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         try:
-            # shiroa build --path-to-root notes/math-analysis/ -w . notes/math-analysis --dest-dir ../../build/math-analysis
+            # shiroa build --font-path assets/fonts --path-to-root notes/math-analysis/ -w . notes/math-analysis --dest-dir ../../build/math-analysis
             notebook_base_url = self.base_url + notebook['name'] + "/"
             cmd = [
                 "shiroa", "build",
+                "--font-path", "assets/fonts",
                 "--path-to-root", notebook_base_url,
                 "-w", str(self.root_dir),
                 notebook['path'],

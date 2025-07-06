@@ -43,7 +43,6 @@ cargo install shiroa --locked
   ]
 )
 
-// 你的笔记内容...
 ```
 
 ### 3. 构建项目
@@ -58,15 +57,14 @@ python build.py build
 ```bash
 # 启动本地服务器
 python build.py serve
-
-# 在浏览器中访问 http://localhost:8000
 ```
+
+在浏览器中访问 http://localhost:8000
 
 ## 📁 项目结构详解
 
 ```
 your-typst-notes/
-├── shiroa.toml              # 主配置文件
 ├── index.html               # 书架首页
 ├── build.py                 # 构建脚本
 ├── static/                  # 静态资源
@@ -86,25 +84,6 @@ your-typst-notes/
 
 ## ⚙️ 配置说明
 
-### shiroa.toml 配置
-
-```toml
-[book]
-title = "我的 Typst 笔记集"
-description = "个人学习笔记合集"
-language = "zh-CN"
-
-# 多笔记本配置
-[[workspace.books]]
-name = "数学分析"
-path = "notes/math-analysis"
-dest = "math-analysis"
-
-[[workspace.books]]
-name = "线性代数"
-path = "notes/linear-algebra"  
-dest = "linear-algebra"
-```
 
 ### 自定义书架页面
 
