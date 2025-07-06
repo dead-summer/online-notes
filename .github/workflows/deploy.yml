@@ -51,7 +51,8 @@ jobs:
 
     - name: Install shiroa
       run: |
-        cargo install shiroa
+        cargo install --git https://github.com/Myriad-Dreamin/shiroa --tag 0.3.0 --locked shiroa
+
         # 验证安装
         shiroa --version
 
