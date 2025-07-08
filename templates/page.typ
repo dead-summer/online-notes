@@ -155,8 +155,7 @@
   set-inherited-levels(1)
   
   set-qed-symbol[#math.qed]
-  show: show-theorem
-
+  show: show-theorion
 
   // 引用设置
   // 未找到 label 时仍能编译

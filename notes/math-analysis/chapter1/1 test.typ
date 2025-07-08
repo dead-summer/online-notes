@@ -1,4 +1,4 @@
-#import "../book.typ": book-page
+#import "../book.typ": *
 
 #show: book-page.with(
   title: "1 test"
